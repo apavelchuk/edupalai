@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  edupalai-db:
+    image: postgres:15-alpine
+    ports:
+      - "5444:5432"
+    environment:
+      "PGDATA": "/var/lib/postgresql/data/pgdata"
+      "POSTGRES_DB": "edupalai"
+      "POSTGRES_PASSWORD": "edupalai"
+      "POSTGRES_USER": "edupalai"
+      "POTGRES_PORT": 5432
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data/pgdata
+
+  edupalai:
+    ports:
+      - "8000:8000"
+    image: edupalai:latest
+    build:
+      context: .
+    depends_on:
+      - edupalai-db
+    volumes:
+      - .:/app
+    environment:
+      ASYNC_DB_CONNECT: "postgresql+asyncpg://edupalai:edupalai@edupalai-db/edupalai"
+      # TEST_DB_CONNECT: "sqlite+aiosqlite:///test.db"
+      GOOGLE_APPLICATION_CREDENTIALS: "/Users/andrey/projects/gcp_private_key.json"
+      GCP_ENGLISH_VOICE: "th-TH-Standard-A"
+      GCP_RUSSIAN_VOICE: "ru-RU-Standard-D"
+      GCP_PUBLIC_CONTENT_BUCKET: "edupalai-public-content"
