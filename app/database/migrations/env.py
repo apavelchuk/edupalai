@@ -10,7 +10,7 @@ from sqlalchemy import pool
 from alembic import context
 
 sys.path = ["", ".."] + sys.path[1:]
-
+print(sys.path)
 from app.config import Config as AppConfig
 
 # this is the Alembic Config object, which provides
@@ -27,6 +27,8 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from app.models.content import Model
+from app.models.conversation_reply_log import Model
+
 target_metadata = Model.metadata
 
 # other values from the config, defined by the needs of env.py,

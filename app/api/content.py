@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 
 from app.models.content import ContentType, ContentLanguage
 from app.services import content as content_service
-from app.services.integrations.gcp import get_url_for_storage_object
+from app.services.integrations.gcp import get_url_for_public_content_obj
 
 router = APIRouter()
 
@@ -22,18 +22,16 @@ class ContentItem(BaseModel):
     @validator("audio_url", pre=False)
     def modify_audio_url(cls, audio_url: str):
         if audio_url is not None and not audio_url.startswith("http"):
-            return get_url_for_storage_object(audio_url)
+            return get_url_for_public_content_obj(audio_url)
         return audio_url
 
     class Config:
         orm_mode = True
 
 
-@router.get("/random-item", response_model=ContentItem, summary="Return random content item.")
+@router.get("/random-item", response_model=ContentItem | None, summary="Return random content item.")
 async def random_item(
-    content_type: ContentType,
-    lang: ContentLanguage,
-    exclude_ids: Optional[List[UUID]] = Query(default=None)
+    content_type: ContentType, lang: ContentLanguage, exclude_ids: Optional[List[UUID]] = Query(default=None)
 ):
     db_item = await content_service.get_random_content_item(content_type, lang, exclude_ids)
     if db_item:

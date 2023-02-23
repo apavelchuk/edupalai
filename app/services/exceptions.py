@@ -1,2 +1,10 @@
+from typing import Optional
+
+from app.logger import Logger
+
+
 class ServiceException(Exception):
-    pass
+    def __init__(self, message, logger: Optional[Logger] = None):
+        if logger:
+            logger.error(message)
+        super().__init__(message)

@@ -17,8 +17,7 @@ TALES = [
     "The enchanted forest came alive at midnight and danced until dawn.",
     "The talking animals helped the lost child find her way home.",
     "The kind sorceress turned the wicked witch into a harmless toad.",
-    "The friendly giant shared his magical beans with the poor village."
-
+    "The friendly giant shared his magical beans with the poor village.",
 ]
 FACTS = [
     "Did you know that a group of flamingos is called a flamboyance?",
@@ -35,7 +34,7 @@ FACTS = [
     "Did you know that there is a species of jellyfish that is immortal and can live forever?",
     "Did you know that a small child could swim through the veins of a blue whale?",
     "Did you know that the world's largest snowflake on record was 15 inches wide and 8 inches thick?",
-    "Did you know that a group of pugs is called a grumble?"
+    "Did you know that a group of pugs is called a grumble?",
 ]
 
 TypeToContentMap = {

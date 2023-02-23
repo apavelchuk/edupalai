@@ -28,6 +28,7 @@ services:
       ASYNC_DB_CONNECT: "postgresql+asyncpg://edupalai:edupalai@edupalai-db/edupalai"
       # TEST_DB_CONNECT: "sqlite+aiosqlite:///test.db"
       GOOGLE_APPLICATION_CREDENTIALS: "/Users/andrey/projects/gcp_private_key.json"
-      GCP_ENGLISH_VOICE: "th-TH-Standard-A"
+      GCP_ENGLISH_VOICE: "fr-FR-Standard-B"
       GCP_RUSSIAN_VOICE: "ru-RU-Standard-D"
       GCP_PUBLIC_CONTENT_BUCKET: "edupalai-public-content"
+      GCP_AI_REPLIES_BUCKET: "edupalai-ai-replies"

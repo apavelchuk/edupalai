@@ -36,5 +36,7 @@ def log_exec_time(func_description: str):
                 exec_time = end_time - start_time
                 logger.log_debug(f"{func_description} executed in approx. {exec_time:.4f} sec.")
             return res
+
         return inner
+
     return coro_wrap
