@@ -8,8 +8,7 @@ from uuid import UUID
 from app.database import store_models_to_db, db_session_factory
 
 from app.models.content import Content, ContentLanguage, ContentType
-from app.services.integrations.gcp import text_to_voice_service_factory, upload_service_factory
-from app.services.integrations.openai import generate_content as new_ai_content
+from app.services import factories
 
 
 async def generate_new_content_and_store_in_db(
@@ -28,11 +27,11 @@ async def gen_new_content_and_upload_for_public_access(
     content_type: ContentType,
     lang: ContentLanguage,
 ) -> Awaitable[Content]:
-    text = new_ai_content(content_type, lang)  # TODO: this will need to be converted to async as well
-    tts_service = text_to_voice_service_factory()
-    audio_file_path = await tts_service.text_to_ogg(lang, text)
+    text = await factories.ai().generate_content(content_type, lang)
+    tts_service = factories.text_to_voice()
+    audio_file_path = await tts_service.text_to_audio(lang, text)
     upload_to_path = os.path.basename(audio_file_path)
-    upload_service = upload_service_factory()
+    upload_service = factories.upload()
     audio_url = await upload_service.upload_public_content(audio_file_path, upload_to_path)
     os.remove(audio_file_path)
     content = Content(

@@ -11,7 +11,7 @@ from app.database import Model
 
 class ContentType(Enum):
     TALE = "t"
-    FACTS = "f"
+    FACT = "f"
 
 
 class ContentLanguage(Enum):

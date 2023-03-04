@@ -32,3 +32,4 @@ services:
       GCP_RUSSIAN_VOICE: "ru-RU-Standard-D"
       GCP_PUBLIC_CONTENT_BUCKET: "edupalai-public-content"
       GCP_AI_REPLIES_BUCKET: "edupalai-ai-replies"
+      OPENAI_API_KEY: "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"

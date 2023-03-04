@@ -3,12 +3,12 @@ from typing import Optional
 from tempfile import SpooledTemporaryFile
 from pydantic import BaseModel
 
-from app.logger import logger_factory
 from app.database.database import store_models_to_db
 from app.models.conversation_reply_log import ConversationReplyLog
 from app.models.content import ContentLanguage
 from .integrations import gcp
 from .service import Service, time_it
+from . import factories
 
 
 class Conversation(Service):
@@ -19,7 +19,7 @@ class Conversation(Service):
         ttv_time, dest_audio = await self.get_audio_for_text(lang, ai_resp)
         await log_response_to_db(ReplyLogEntry(
             lang=lang,
-            user_reply=vtt_resp.text,
+            user_reply=vtt_resp.transcript,
             user_reply_confidence_score=vtt_resp.confidence,
             vtt_time=vtt_time,
             ttv_time=ttv_time,
@@ -30,8 +30,8 @@ class Conversation(Service):
 
     @time_it
     async def get_text_for_audio(self, source_audio_content: BytesIO, lang: ContentLanguage) -> gcp.VTTResp:
-        vtt_service = gcp.voice_to_text_service_factory()
-        resp: gcp.VTTResp = await vtt_service.ogg_to_text(lang, source_audio_content)
+        vtt_service = factories.voice_to_text()
+        resp: gcp.VTTResp = await vtt_service.voice_to_text(lang, source_audio_content)
         return resp
 
     @time_it
@@ -41,13 +41,9 @@ class Conversation(Service):
 
     @time_it
     async def get_audio_for_text(self, lang: ContentLanguage, text: str) -> str:
-        ttv_service = gcp.text_to_voice_service_factory()
-        out_audio: str = await ttv_service.text_to_ogg(lang, text)
+        ttv_service = factories.text_to_voice()
+        out_audio: str = await ttv_service.text_to_audio(lang, text)
         return out_audio
-
-
-def conversation_service_factory() -> Conversation:
-    return Conversation(logger=logger_factory("Conversation Service"))
 
 
 class ReplyLogEntry(BaseModel):
