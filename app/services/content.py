@@ -29,7 +29,7 @@ async def gen_new_content_and_upload_for_public_access(
 ) -> Awaitable[Content]:
     text = await factories.ai().generate_content(content_type, lang)
     tts_service = factories.text_to_voice()
-    audio_file_path = await tts_service.text_to_audio(lang, text)
+    audio_file_path = await tts_service.text_to_voice(lang, text)
     upload_to_path = os.path.basename(audio_file_path)
     upload_service = factories.upload()
     audio_url = await upload_service.upload_public_content(audio_file_path, upload_to_path)

@@ -33,17 +33,14 @@ def get_voice_params(lang: ContentLanguage) -> gcp_tts.VoiceSelectionParams:
 
 class TextToVoice(Service):
     def __init__(
-        self,
-        tts_client: gcp_tts.TextToSpeechAsyncClient,
-        audio_encoding: gcp_tts.AudioEncoding,
-        *args, **kwargs
+        self, tts_client: gcp_tts.TextToSpeechAsyncClient, audio_encoding: gcp_tts.AudioEncoding, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.tts_client: gcp_tts.TextToSpeechAsyncClient = tts_client
         self.audio_encoding = audio_encoding
 
     # @log_exec_time("text_to_audio")
-    async def text_to_audio(self, lang: ContentLanguage, text: str) -> Awaitable[str]:
+    async def text_to_voice(self, lang: ContentLanguage, text: str) -> Awaitable[str]:
         text_input = gcp_tts.SynthesisInput(text=text)
         voice_params = get_voice_params(lang)
         audio_config = gcp_tts.AudioConfig(audio_encoding=self.audio_encoding)
@@ -63,7 +60,7 @@ class TextToVoice(Service):
 
 
 class StreamTextToVoice(TextToVoice):
-    async def text_to_audio(
+    async def text_to_voice(
         self,
         lang: ContentLanguage,
         text_stream: AsyncIterator[str],
@@ -157,19 +154,15 @@ def content_lang_to_gcp_lang_code(lang: ContentLanguage) -> str:
     }[lang]
 
 
-class VoiceToTextStreamViaWebSocket(VoiceToText):
-    def __init__(self, end_stream_message: bytes, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.end_stream_message = end_stream_message
-
+class VoiceToTextStream(VoiceToText):
     async def voice_to_text(
         self,
         lang: ContentLanguage,
-        stream: WebSocket,
-        encoding: Optional[RecognitionConfig.AudioEncoding] = RecognitionConfig.AudioEncoding.WEBM_OPUS
+        stream: AsyncIterator[bytes],
+        encoding: Optional[RecognitionConfig.AudioEncoding] = RecognitionConfig.AudioEncoding.WEBM_OPUS,
     ) -> VTTResp:
         stream = await self.client.streaming_recognize(
-            requests=self._request_from_websocket_generator(stream, config=self.get_config(lang, encoding))
+            requests=self._request_generator_for_stream(stream, config=self.get_config(lang, encoding))
         )
         final_transcription = ""
         average_confidence = [0.0, 1]
@@ -179,20 +172,15 @@ class VoiceToTextStreamViaWebSocket(VoiceToText):
                 final_transcription += best_alternative.transcript
                 average_confidence[0] += best_alternative.confidence
                 average_confidence[1] += 1
-        return VTTResp(
-            transcription=final_transcription,
-            confidence=average_confidence[0] / average_confidence[1]
-        )
+        return VTTResp(transcription=final_transcription, confidence=average_confidence[0] / average_confidence[1])
 
-    async def _request_from_websocket_generator(
+    async def _request_generator_for_stream(
         self,
-        websocket: WebSocket,
+        stream: AsyncIterator[bytes],
         config: stt_types.StreamingRecognitionConfig,
     ) -> AsyncIterator[stt_types.StreamingRecognizeRequest]:
         yield stt_types.StreamingRecognizeRequest(streaming_config=config)
-        while audio_data := await websocket.receive_bytes():
-            if audio_data == self.end_stream_message:
-                break
+        async for audio_data in stream:
             yield stt_types.StreamingRecognizeRequest(audio_content=audio_data)
 
     def get_config(
@@ -216,15 +204,12 @@ class VoiceToTextStreamViaWebSocket(VoiceToText):
 def voice_to_text_service_factory(
     stt_client: Optional[gcp_stt.SpeechAsyncClient] = None,
     stream: Optional[bool] = False,
-    stream_end_message: Optional[bytes] = None,
 ) -> VoiceToText:
     if stt_client is None:
         stt_client = gcp_stt.SpeechAsyncClient()
     logger = logger_factory("GCP VoiceToText")
     if stream:
-        if stream_end_message is None:
-            raise ServiceException("Stream end_message has to be provided.")
-        return VoiceToTextStreamViaWebSocket(stream_end_message, client=stt_client, logger=logger)
+        return VoiceToTextStream(client=stt_client, logger=logger)
     return VoiceToText(stt_client, logger)
 
 

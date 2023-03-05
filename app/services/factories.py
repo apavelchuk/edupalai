@@ -13,8 +13,8 @@ def upload(stream: Optional[bool] = False) -> gcp.Upload:
     return gcp.upload_service_factory(stream=stream)
 
 
-def voice_to_text(stream: Optional[bool] = False, stream_end_message: Optional[bytes] = None) -> gcp.VoiceToText:
-    return gcp.voice_to_text_service_factory(stream=stream, stream_end_message=stream_end_message)
+def voice_to_text(stream: Optional[bool] = False) -> gcp.VoiceToText:
+    return gcp.voice_to_text_service_factory(stream=stream)
 
 
 def text_to_voice(
