@@ -104,19 +104,24 @@ class CompletionRequest(RequestMaker):
         # "created": 1677318572,
         # "choices": [{"text": "!", "index": 0, "logprobs": null, "finish_reason": null}],
         # "model": "text-ada-001"}\n\n'
+
         try:
-            json = ujson.loads(text_chunk.decode()[6:])
+            deltas = text_chunk.decode().split("data: ")[1:]
         except Exception:
             raise ServiceException(text_chunk, self.logger)
-        if not json:
+        if not deltas:
             return None
         try:
-            if json["choices"][0]["finish_reason"] is not None:
-                # can actually cut off at random position due to tokens request limit
-                return None
-            if json["choices"][0]["text"].strip("\n") == "":
-                return None
-            return json["choices"][0]["text"]
+            for delta in deltas:
+                if delta.startswith(STREAM_END_MESSAGE):
+                    return None
+                delta_json = ujson.loads(delta)
+                top_choice = delta_json["choices"][0]
+                if top_choice["finish_reason"] is not None:
+                    return None
+                if top_choice["text"].strip("\n") == "":
+                    return None
+                return top_choice["text"]
         except (KeyError, IndexError) as exc:
             raise ServiceException(str(exc), self.logger)
 
@@ -238,7 +243,7 @@ class AI(Service):
 def openai_service_factory(pre_moderate: Optional[bool] = True) -> AI:
     logger = logger_factory("OpenAI")
     auth_token = Config.get("OPENAI_API_KEY")
-    req_maker = ChatRequest(auth_token=auth_token, logger=logger)
+    req_maker = CompletionRequest(auth_token=auth_token, logger=logger)
     if pre_moderate:
         req_maker = ModerationRequest(req_maker, auth_token=auth_token, logger=logger)
 

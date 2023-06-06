@@ -1,5 +1,6 @@
 import traceback
 
+from websockets import exceptions as WSExceptions
 from os.path import basename
 from fastapi import APIRouter, UploadFile, HTTPException
 from fastapi import WebSocket
@@ -41,18 +42,21 @@ async def conversation_stream(lang: ContentLanguage, websocket: WebSocket):
         while True:
             audio_data = await websocket.receive_bytes()
             if audio_data == STREAMING_AUDIO_START_MESSAGE:
-                reply_stream = conv_service.get_and_log_stream_reply(lang, websocket_user_audio_stream(websocket))
+                reply_stream = conv_service.get_and_log_stream_reply(lang, websocket_user_input_stream(websocket))
                 async for reply_data in reply_stream:
                     await websocket.send_bytes(reply_data)
-            else:
-                raise APIException(
-                    f"""
-                    Unexpected content. Use \"{STREAMING_AUDIO_START_MESSAGE}\" to start
-                     and \"{STREAMING_AUDIO_END_MESSAGE}\" to end the stream.
-                """
-                )
+            # else:
+            #     raise APIException(
+            #         f"""
+            #         Unexpected content. Use \"{STREAMING_AUDIO_START_MESSAGE}\" to start
+            #          and \"{STREAMING_AUDIO_END_MESSAGE}\" to end the stream.
+            #     """
+            #     )
+    except WSExceptions.ConnectionClosedError:
+        # TODO: should we care if the connection was closed on the user side?
+        pass
     except Exception:
-        raise APIException(f"Could not process audio: \n {traceback.format_exc()}")
+        raise APIException(f"Could not get reply: \n {traceback.format_exc()}")
     finally:
         try:
             await websocket.close()
@@ -60,7 +64,7 @@ async def conversation_stream(lang: ContentLanguage, websocket: WebSocket):
             pass
 
 
-async def websocket_user_audio_stream(websocket: WebSocket) -> AsyncIterator[bytes]:
+async def websocket_user_input_stream(websocket: WebSocket) -> AsyncIterator[bytes]:
     while (audio_data := await websocket.receive_bytes()) != STREAMING_AUDIO_END_MESSAGE:
         yield audio_data
 

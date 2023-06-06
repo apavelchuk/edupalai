@@ -10,7 +10,6 @@ from sqlalchemy import pool
 from alembic import context
 
 sys.path = ["", ".."] + sys.path[1:]
-print(sys.path)
 from app.config import Config as AppConfig
 
 # this is the Alembic Config object, which provides

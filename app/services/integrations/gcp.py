@@ -66,9 +66,10 @@ class StreamTextToVoice(TextToVoice):
         text_stream: AsyncIterator[str],
     ) -> AsyncIterator[bytes]:
         voice_params = get_voice_params(lang)
-        audio_config = gcp_tts.AudioConfig(audio_encoding=self.audio_encoding, pitch=0.0)
+        audio_config = gcp_tts.AudioConfig(audio_encoding=self.audio_encoding, sample_rate_hertz=48000, pitch=0.0)
 
         async for text_chunk in text_stream:
+            print("GPT says:", text_chunk)
             text_input = gcp_tts.SynthesisInput(text=text_chunk)
             response = await self.tts_client.synthesize_speech(
                 input=text_input,
@@ -194,6 +195,8 @@ class VoiceToTextStream(VoiceToText):
                 encoding=encoding,
                 sample_rate_hertz=48000,
                 model="latest_short",
+                audio_channel_count=1,
+                enable_automatic_punctuation=True,
                 use_enhanced=False,
                 max_alternatives=1,
             ),
